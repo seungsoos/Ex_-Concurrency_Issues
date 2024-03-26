@@ -18,7 +18,6 @@ public class Stock {
     private Long productId;
 
     private Long quantity;
-
     @Version
     private Long version;
 
