@@ -25,6 +25,8 @@ class StockServiceTest {
     @Autowired
     private StockService stockService;
     @Autowired
+    private PessimisticLockStockService pessimisticLockStockService;
+    @Autowired
     private StockRepository stockRepository;
 
     @BeforeEach
@@ -74,5 +76,32 @@ class StockServiceTest {
         // then
         assertEquals(0, stock.getQuantity());
     }
+
+    @Test
+    @DisplayName("Pessimistic Lock Test")
+    void pessimisticLockStockService() throws InterruptedException {
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    pessimisticLockStockService.decrease(1L, 1L);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
+        }
+
+        countDownLatch.await();
+
+        // when
+        Stock stock = stockRepository.findById(1L).orElseThrow();
+
+        // then
+        assertEquals(0, stock.getQuantity());
+    }
+
 
 }
